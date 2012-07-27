@@ -169,7 +169,6 @@ class Settings():
         window.set_title("Help")
         window.set_default_size(600, 600)
         window.set_border_width(10)
-        window.connect('delete_event', self.delete_event)
 
         vbox = gtk.VBox()
         window.add(vbox)
