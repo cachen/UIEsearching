@@ -125,9 +125,15 @@ class Searching(object):
 
     def findFunc(self):
         if self.findtype == 'find':
-            searchings = [pyatspi.findDescendant(self.appname, lambda x: x.getRoleName() == self.ctrlname)]
+            try:
+                searchings = [pyatspi.findDescendant(self.appname, lambda x: x.getRoleName() == self.ctrlname)]
+            except TypeError:
+                searchings = []
         elif self.findtype == 'findAll':
-            searchings = pyatspi.findAllDescendants(self.appname, lambda x: x.getRoleName() == self.ctrlname)
+            try:
+                searchings = pyatspi.findAllDescendants(self.appname, lambda x: x.getRoleName() == self.ctrlname)
+            except TypeError:
+                searchings = []
 
         return searchings
 

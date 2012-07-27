@@ -32,6 +32,7 @@ class Settings():
         self.sw = gtk.ScrolledWindow()
         self.sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         self.textview = gtk.TextView()
+        self.textview.set_editable(False)
         self.textbuffer = self.textview.get_buffer()
         self.sw.add(self.textview)
         box1.pack_start(self.sw, True, True, 0)
@@ -163,16 +164,31 @@ class Settings():
         self.delete_event(self.window, None)
 
     def OnButton3(self, widget, data):
-        info = e.help()
-        self.dialog = gtk.Dialog(title="Help Dialog",
-                                 flags=gtk.DIALOG_MODAL)
-        self.dialog.add_button("OK", gtk.RESPONSE_CLOSE)
-        self.dialog.set_border_width(50)
-        info_label = gtk.Label(info)
-        self.dialog.vbox.pack_start(info_label)
-        info_label.show()
-        self.dialog.run()
-        self.dialog.destroy() 
+        # Draw window to show README
+        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window.set_title("Help")
+        window.set_default_size(600, 600)
+        window.set_border_width(10)
+        window.connect('delete_event', self.delete_event)
+
+        vbox = gtk.VBox()
+        window.add(vbox)
+
+        sw = gtk.ScrolledWindow()
+        sw.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        textview = gtk.TextView()
+        textview.set_editable(False)
+        textbuffer = textview.get_buffer()
+        sw.add(textview)
+
+        info = open('README', 'r')
+        if info:
+            string = info.read()
+            textbuffer.set_text(string)
+            info.close()
+
+        vbox.pack_start(sw)
+        window.show_all() 
 
     def OnButton4(self, widget, data):
         dialog = gtk.Dialog(title="Preferences",

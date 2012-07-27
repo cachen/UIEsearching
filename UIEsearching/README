@@ -5,14 +5,17 @@ Usage: Esearching.py [options]
 For example: Esearching.py -a gedit -t findAll -c PushButton -n Undo -C 0
 Options:
   -h | --help        Print help information (this message)
-  -a | --appname     Give application's accessibility name (Firefox, gedit....)
+  -a | --appname     Give application's accessibility name (Firefox, gedit...)
   -t | --findtype    'findAll' or 'find'
-  -c | --ctrlname    Give the control's name you want to find (push button, menu....)
-  -n | --elementname Give the element's name you want to find (Open, Edit....)
+  -c | --ctrlname    Give the control's name you want to find (push button, menu...)
+  -n | --elementname Give the element's name you want to find (Open, Edit...)
   -C | --children    Whether print out element's children
 
 How to know appname:
-    If you don't know the application's accessibility name, just raise the application, and doing "Esearching.py -c application" to show all applications, and check the appname from the list.
+If you don't know the application's accessibility name:
+    1) just raise the application, 
+    2) doing "Esearching.py -c application" to show all applications, 
+    3) and check the appname from the <ElementName> list.
 
 ==========================================
 UIEsearching.py
@@ -22,11 +25,14 @@ Usage: UIEsearching.py
 It's a pygtk UI application.
 
 Preferences: to enable accessibility, and start at-spi-registryd process
-Application Name: Give application's accessibility name (Firefox, gedit....)
-Element Name: Give the element's name you want to find (Open, Edit....)
-Control Name: Give the control's name you want to find (push button, menu....)
+Application Name: Give application's accessibility name (Firefox, gedit...)
+Element Name: Give the element's name you want to find (Open, Edit...)
+Control Name: Give the control's name you want to find (push button, menu...)
 Find Type: 'findAll' or 'find'
 Show Children: Whether print out element's children
 
 How to know appname:
-    If you don't know the application's accessibility name, just raise the application, and click "Search" button to show all applications, and check the appname from the list.
+If you don't know the application's accessibility name:
+    1) just raise the application, 
+    2) click "Search" button to show all applications, 
+    3) and check the appname from the list.
