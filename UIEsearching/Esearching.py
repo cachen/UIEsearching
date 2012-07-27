@@ -1,11 +1,9 @@
 #!/usr/bin/env python
-
 import sys
 import getopt
 import os
 import re
 import pyatspi
-import strongwind
 
 """
 Search for application's element
@@ -15,31 +13,54 @@ def abort(status):
     ''' exit according to status '''
     sys.exit(status)
 
-def output(s, newline=True):
+def output(s=(), newline=True):
+    format = "ControlName: %-20s ElementName: %-20s Parent: %-20s Children:\n"
     if not Settings.is_quiet:
         if newline:
-            print s
-        else:
-            print s
+            info = format % (s)
+    return info
 
-def toControlName(str):
-    if str.isalnum() and str[0].islower():
-        words = ''
-        for c in str:
-            if c.isupper():
-                words += ' '
-            words += c
-        name = ''
-        for word in words.split(' '):
-            name += word.capitalize()
+def help():
+    help_info = """Usage: Esearching.py [options]
+    For example: Esearching.py -a gedit -t findAll -c PushButton -n Undo -C 0
+    Options:
+          -h | --help        Print help information (this message)
+          -a | --appname     Give application's name (Firefox, gedit....)
+          -t | --findtype    'findAll' or 'find'
+          -c | --ctrlname    Give the control's name you want to find (PushButton, Menu....)
+          -n | --elementname Give the element's name you want to find (Open, Edit....)
+          -C | --children    Whether print out element's children"""
+    return help_info
+
+def acc_status():
+    '''
+    Check accessibility status
+    '''
+    acc_status = os.popen('gconftool-2 -g /desktop/gnome/interface/accessibility').read().strip()
+    return acc_status
+
+def acc_active(status):
+    '''
+    Setup accessibility status
+    '''
+    os.system('gconftool-2 -s --type=bool /desktop/gnome/interface/accessibility %s' % status)
+
+def spi_status():
+    '''
+    Check at-spi-registryd process
+    '''
+    process = os.popen('pgrep at-spi').read().strip()
+    if process:
+        spi_status = "running"
     else:
-        name = ''
-        for word in re.split('[^a-zA-Z0-9]', str):
-            if len(re.split('[^a-zA-Z0-9]', str)) > 1:
-                name = name + word.capitalize()
-            else:
-                name = name + word
-    return name
+        spi_status = "not running"
+    return spi_status
+
+def spi_active():
+    '''
+    Make at-spi-registryd process running
+    '''
+    os.system('/usr/lib/at-spi/at-spi-registryd &')
 
 class Settings(object):
 
@@ -51,35 +72,31 @@ class Settings(object):
     ctrlname = None
     elementname = None
 
-    def __init__(self):
-        self.argument_parser()
-
     def argument_parser(self):
         opts = []
         args = []
         try:
             opts, args = getopt.getopt(sys.argv[1:],"ha:t:c:n:C:",["appname=","findtype=","ctrlname=","elementname=","help", "children"])
         except getopt.GetoptError:
-            self.help()
+            print help()
             abort(1)
 
         for o,a in opts:
             if o in ("-h","--help"):
-                self.help()
+                print help()
                 abort(0)
+
             if o in ("-a", "--appname"):
                 Settings.appname = a
+
             if o in ("-t", "--findtype"):
                 Settings.findtype = a
                 if Settings.findtype != "find" and Settings.findtype != "findAll":
-                  self.help()
+                  print help()
                   abort(0)
 
             if o in ("-c", "--ctrlname"):
-                Settings.ctrlname = a
-                if Settings.findtype == "findAll":
-                    Settings.ctrlname = a + 's'
-                Settings.ctrlname = toControlName(Settings.ctrlname)
+                Settings.ctrlname = a.lower()
 
             if o in ("-n", "--elementname"):
                 Settings.elementname = a
@@ -90,47 +107,48 @@ class Settings(object):
                 else:
                     Settings.list_children = int(a)
 
-    def help(self):
-      output("Usage: searching.py [options]")
-      output("For example: searching.py -a gedit -t findAll -c PushButton -n Undo -C 0")
-      output("Options:")
-      output("  -h | --help        Print help information (this message)")
-      output("  -a | --appname     Give application's name")
-      output("  -t | --findtype    'findAll' or 'find'")
-      output("  -c | --ctrlname    Give the control's name you want to find")
-      output("  -n | --elementname Give the element's name you want to find")
-      output("  -C | --children    Whether print out element's children")
-
 class Searching(object):
 
-    def __init__(self):
-        if Settings.ctrlname != None and not Settings.ctrlname.startswith("Application") and Settings.appname == None:
+    def __init__(self, findtype, appname, ctrlname, elementname, list_children):
+        self.appname = appname
+        self.findtype = findtype
+        self.ctrlname = ctrlname
+        self.elementname = elementname
+        self.list_children = list_children
+
+        if self.ctrlname != None and not self.ctrlname.startswith("application") and self.appname == None:
             print "Usage: Please give application's name, for example: -a gedit"
             abort(1)
-        if Settings.ctrlname == None and Settings.elementname == None:
+        if self.ctrlname == None and self.elementname == None:
             print "Usage: Please give control name or element name, for example: -c PushButton, or -n Save"
             abort(1)
 
     def findFunc(self):
-        func = getattr(Settings.appname, Settings.findtype + Settings.ctrlname)
-        searchings = func(name=Settings.elementname, checkShowing=False)
-        if Settings.findtype == 'find':
-            searchings = [searchings]
+        if self.findtype == 'find':
+            searchings = [pyatspi.findDescendant(self.appname, lambda x: x.getRoleName() == self.ctrlname)]
+        elif self.findtype == 'findAll':
+            searchings = pyatspi.findAllDescendants(self.appname, lambda x: x.getRoleName() == self.ctrlname)
+
         return searchings
 
     def searchObj(self, appname, ctrlname, elementname):
-        app = strongwind.cache._desktop.findApplication(Settings.appname, checkShowing=False)
-        Settings.appname = app
+        reg = pyatspi.Registry
+        desktop = reg.getDesktop(0)
+        app = pyatspi.findDescendant(desktop, lambda x: x.name == self.appname)
+        self.appname = app
 
-        if Settings.ctrlname != None and Settings.ctrlname.startswith("Application"):
-            Settings.appname = strongwind.cache._desktop
-            searchings = self.findFunc()
-        elif Settings.ctrlname == None:
-            searchings = pyatspi.findAllDescendants(Settings.appname, lambda x: x.name == Settings.elementname)
-        elif Settings.ctrlname == None and Settings.findtype == "find":
-            searchings = pyatspi.findDescendant(Settings.appname, lambda x: x.name == Settings.elementname)
+        if self.ctrlname != None and self.ctrlname.startswith("application"):
+            searchings = []
+            for i in desktop:
+                if i is not None:
+                    searchings.append(i)
+        elif self.ctrlname == None:
+            searchings = pyatspi.findAllDescendants(self.appname, lambda x: x.name == self.elementname)
+        elif self.ctrlname == None and self.findtype == "find":
+            searchings = pyatspi.findDescendant(self.appname, lambda x: x.name == self.elementname)
         else:
             searchings = self.findFunc()
+
         return searchings
 
     def getChildren(self,obj, child_count):
@@ -138,10 +156,8 @@ class Searching(object):
         children_name = []
         children_role = []
         children_info = {}
-        if isinstance(obj, strongwind.accessibles.Accessible):
-            accessible = obj._accessible
-        else:
-            accessible = obj
+
+        accessible = obj
         for n in range(child_count):
             children.append(accessible.getChildAtIndex(n))
             children_name.append(accessible.getChildAtIndex(n).name)
@@ -150,55 +166,46 @@ class Searching(object):
         return children, children_info
 
     def run(self):
-        if Settings.list_children is not None:
-            searchings = self.searchObj(Settings.appname, Settings.ctrlname, Settings.elementname)
+        output_info = []
+        if self.list_children is not None:
+            searchings = self.searchObj(self.appname, self.ctrlname, self.elementname)
 
             for obj in searchings:
-                child_count = obj._accessible.childCount
+                child_count = obj.childCount
                 (children, children_info) = self.getChildren(obj, child_count)
 
-                if Settings.list_children == 0:
-                    output("======================================================")
-                    output("ControlName: %s	ElementName: %s		Parent: %s	Children:\n" % \
-                                      ([obj._accessible.getRoleName()], [obj.name], obj._accessible.parent))
-                    for i in enumerate(children_info):
-                        output(i)
+                if self.list_children == 0:
+                    output_info.append("="*80)
+                    output_info.append(output(([obj.getRoleName()], [obj.name], obj.parent)))
                 else:
                     for c in children:
                         child_count = c.childCount
                         (children, children_info) = self.getChildren(c, child_count)
-                        if Settings.list_children == 1:
-                            output("======================================================")
-                            output("ControlName: %s	ElementName: %s		Parent: %s	Children:\n" % \
-                                       ([c.getRoleName()], [c.name], c.parent))
-                            for i in enumerate(children_info):
-                                output(i)
-                        elif Settings.list_children > 1:
+                        if self.list_children == 1:
+                            output_info.append("="*80)
+                            output_info.append(output(([c.getRoleName()], [c.name], c.parent)))
+                        elif self.list_children > 1:
                             for c1 in children:
                                 if c1.childCount > 0:
                                     (children, children_info) = self.getChildren(c1, c1.childCount)
-                                    output("======================================================")
-                                    output("ControlName: %s	ElementName: %s		Parent: %s	Children:\n" % \
-                                                ([c1.getRoleName()], [c1.name], c1.parent))
-                                    for i in enumerate(children_info):
-                                        output(i)
+                                    output_info.append("="*80)
+                                    output_info.append(output(([c1.getRoleName()], [c1.name], c1.parent)))
+
+                for i in enumerate(children_info):
+                    output_info.append(i)
         else:
-            searchings = self.searchObj(Settings.appname, Settings.ctrlname, Settings.elementname)
+            searchings = self.searchObj(self.appname, self.ctrlname, self.elementname)
             for i in searchings:
-                output("======================================================")
-                output("ControlName: %s	ElementName: %s		Parent: %s" % \
-                                      ([i._accessible.getRoleName()], [i.name], i._accessible.parent))
+                output_info.append("="*80)
+                output_info.append(output(([i.getRoleName()], [i.name], i.parent)))
 
-class Main(object):
-
-  def main(self, argv=None):
-    s = Searching()
-    r = None
-    if r is None or r == 0:
-      r = s.run()
-    return r
+        return output_info
 
 if __name__ == '__main__':
-  Settings()
-  main_obj = Main();
-  sys.exit(main_obj.main())
+  st = Settings()
+  st.argument_parser()
+  s = Searching(Settings.findtype, Settings.appname, Settings.ctrlname, Settings.elementname, Settings.list_children)
+
+  for i in s.run():
+    print i
+

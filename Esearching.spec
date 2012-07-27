@@ -9,11 +9,9 @@ Group:          SuSE internal
 Summary:        Accessible information searching tool for UI Automation
 Provides:	UIEsearching
 Obsoletes:	UIEsearching
-Requires:       strongwind
 Version:        0.1
-Release:        1
+Release:        2
 Source0:        %name-%version.tar.bz2
-Source1:        Esearching.py
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
 
@@ -26,8 +24,8 @@ Accessible information searching tool for UI Automation test
 %build
 
 %install
-install -m 755 -d $RPM_BUILD_ROOT/usr/share/qa/tools
-install -m 755 %{S:1} $RPM_BUILD_ROOT/usr/share/qa/tools
+install -m 755 -d $RPM_BUILD_ROOT/usr/share/qa/tools/%name
+cp -a * $RPM_BUILD_ROOT/usr/share/qa/tools/%name
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -37,5 +35,7 @@ rm -rf $RPM_BUILD_ROOT
 /usr/share/qa/tools
 
 %changelog
+* Thu Jul 26 2012 - cachen@suse.com
+- Create the second version: add pygtk UI app
 * Thu Sep 29 2011 - cachen@suse.com
 - Create the first version
