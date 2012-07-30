@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
-import gtk
 import Esearching as e
+import gtk
 
 from string import join
 from time import sleep
