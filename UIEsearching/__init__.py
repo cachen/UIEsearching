@@ -4,4 +4,3 @@ import getopt
 import os
 import re
 import pyatspi
-import gobject

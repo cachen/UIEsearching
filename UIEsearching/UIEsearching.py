@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import os
 import gtk
-import gobject
 import Esearching as e
 
 from string import join
@@ -53,7 +52,7 @@ class Settings():
         self.ele_entry.set_max_length(20)
 
         self.ctrl_label = gtk.Label('Control Name:')
-        store = gtk.ListStore(gobject.TYPE_STRING)
+        store = gtk.ListStore(str)
         self.ctrl_combo = gtk.ComboBoxEntry(store)
         self.ctrl_combo.insert_text(0, "application")
         self.ctrl_combo.insert_text(1, "push button")
@@ -76,7 +75,7 @@ class Settings():
         self.child_label = gtk.Label('Show Children:')
         self.no_radio = gtk.RadioButton(None, 'No')
         self.yes_radio = gtk.RadioButton(self.no_radio, 'Yes')
-        store = gtk.ListStore(gobject.TYPE_STRING)
+        store = gtk.ListStore(str)
         self.child_combo = gtk.ComboBox(store)
         cell = gtk.CellRendererText()
         self.child_combo.pack_start(cell, True)
