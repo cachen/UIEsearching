@@ -1,4 +1,4 @@
 language: python
 install: true
-script: test.py
+script: ./test.py
 
