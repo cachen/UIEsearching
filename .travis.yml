@@ -6,7 +6,7 @@ notifications:
 
 script:
   - cd $TRAVIS_BUILD_DIR
-  - chmod +x ./test.py
+  - chmod +x test.py
 deploy:
   provider: script
   script: ./test.py
