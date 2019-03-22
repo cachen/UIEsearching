@@ -1,4 +1,8 @@
 language: python
 install: true
 #script: ./test.py
+notifications:
+  email: false
 
+script:
+  - ./test.py
