@@ -1,7 +1,4 @@
-deploy:
-  provider: pages
-  skip-cleanup: true
-  github-token: 9f619ddeedf003714e38ecb5a4ed762734fa8fca
-  keep-history: true
-  on:
-    branch: master
+language: python
+install: true
+script: tests/test.py
+
