@@ -5,4 +5,9 @@ notifications:
   email: false
 
 script:
-  - test.py
+  - cd $TRAVIS_BUILD_DIR
+  - chmod +x ./test.py
+deploy:
+  provider: script
+  script: ./test.py
+  skip_cleanup: true
