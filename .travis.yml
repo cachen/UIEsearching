@@ -7,7 +7,4 @@ notifications:
 script:
   - cd $TRAVIS_BUILD_DIR
   - chmod +x test.py
-deploy:
-  provider: script
-  script: ls && UIEsearching/test.py
-  skip_cleanup: true
+  - ./test.py
