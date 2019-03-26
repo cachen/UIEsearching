@@ -9,5 +9,5 @@ script:
   - chmod +x test.py
 deploy:
   provider: script
-  script: ./test.py
+  script: ls && UIEsearching/test.py
   skip_cleanup: true
